@@ -5,6 +5,7 @@
 #include <stdlib.h> /* for exit() */
 #include <errno.h> /* for errno */
 #include <sys/wait.h> /* for WAIT_ANY */
+#include <fcntl.h> /* for file control */
 #include <string.h>
 
 #include "dsh.h"
@@ -256,8 +257,10 @@ if (job_is_completed(j))
                     extern char **environ;
                     char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
                     environ = env_args;
-                    execvp(p->argv[0], p->argv);
-                    exit(0);
+    				if (p->argv[0] != NULL) {
+                  		execvp(p->argv[0], p->argv);
+                	}
+                	exit(0);
 			   default: /* parent */
 				/* establish child process group here to avoid race
 				* conditions. */
@@ -563,14 +566,37 @@ char* promptmsg() {
 
 bool isBuiltIn(process_t* process) {
     char* command = process->argv[0];
+	if (command == NULL) {
+    	return false;
+	}
     if (!strcmp(command, "cd")) {
         chdir(process->argv[1]);
         process->completed = true;
         return true;
     } else if (!strcmp(command, "bg")) {
+    	int process_value = (int)process->argv[1];
+    	pid_t bg_process = tcgetpgrp(process_value);
+   	 
+    	job_t* target_job = find_job(bg_process);
+   	 
+    	if (target_job==NULL) {
+        	target_job = find_last_job();
+        	}
+       	 
+    	continue_job(target_job);
     	process->completed = true;
         return true;
     } else if (!strcmp(command, "fg")) {
+    	int process_value = (int)process->argv[1];
+    	pid_t bg_process = tcgetpgrp(process_value);
+    	job_t* target_job = find_job(bg_process);
+   	 
+    	if (target_job==NULL) {
+        	target_job = find_last_job();
+        	}
+       	 
+    	tcsetpgrp(shell_terminal, target_job->pgid);
+    	continue_job(target_job);
     	process->completed = true;
         return true;
     } else if (!strcmp(command, "jobs")) {
