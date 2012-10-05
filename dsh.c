@@ -51,6 +51,14 @@ int job_is_stopped(job_t *j) {
 	return 1;
 }
 
+int job_is_stopped_real(job_t *j) {
+
+	process_t *p;
+	for(p = j->first_process; p; p = p->next)
+		if(!p->stopped)
+	    		return 0;
+	return 1;
+}
 /* Return true if all processes in the job have completed.  */
 int job_is_completed(job_t *j) {
 
@@ -62,7 +70,7 @@ int job_is_completed(job_t *j) {
 }
 
 char* getStatus(job_t *j){
-	if (job_is_stopped(j)) return "Stopped";
+	if (job_is_stopped_real(j)) return "Stopped";
 	if (job_is_completed(j)) return "Done";
 	return "Running";
 }
@@ -128,7 +136,7 @@ void free_jobs() {
 	job_t *prev = NULL;
 
 	while(curr) {
-	if (job_is_completed(curr))
+	if (job_is_completed(curr) && !job_is_stopped_real(curr))
 		{	
 			free_job(curr);
 			if (prev != NULL)
