@@ -276,7 +276,7 @@ if (job_is_completed(j))
 			if(fg){
 			    /* Wait for the job to complete */
 	                    if (pid != 0) {
-	                        waitpid(pid, &status, 0);
+	                        waitpid(pid, &status, WUNTRACED);
 	                    }
 	                    p->completed = true;
 
