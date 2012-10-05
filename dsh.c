@@ -63,7 +63,7 @@ int job_is_completed(job_t *j) {
 
 char* getStatus(job_t *j){
 	if (job_is_completed(j)) return "Done";
-	if (job_is_stopped(j)) return "Done";
+	if (job_is_stopped(j)) return "Stopped";
 	return "Running";
 }
 
