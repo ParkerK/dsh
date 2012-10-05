@@ -63,6 +63,7 @@ int job_is_completed(job_t *j) {
 
 char* getStatus(job_t *j){
 	if (job_is_completed(j)) return "Done";
+	if (job_is_stopped(j)) return "Stopped";
 	return "Running";
 }
 
@@ -76,6 +77,7 @@ void job_helper() {
 		j = j->next;
 		count++;
 		status = getStatus(j);
+		if ()
 		printf("[%d]-\t%s\t\t%s\n", count, status, j->commandinfo);
 	}
 	free_jobs();
