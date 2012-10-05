@@ -306,7 +306,11 @@ void spawn_job(job_t *j, bool fg) {
                 if (pid != 0) {
                     waitpid(pid, &status, WUNTRACED);
                 }
-                p->completed = true;
+                if (status == 0)
+                {p->completed = true;}
+                else
+                {p->completed = true;
+                 p->stopped = true;}
 
                 /* Transfer control back to the shell */
                 tcsetpgrp(shell_terminal, dsh_pgid);
