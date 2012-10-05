@@ -295,10 +295,17 @@ void spawn_job(job_t *j, bool fg) {
 	        int status;
 			if(fg){
 			    /* Wait for the job to complete */
+<<<<<<< HEAD
                 if (pid != 0) {
                     waitpid(pid, &status, 0);
                 }
                 p->completed = true;
+=======
+	                    if (pid != 0) {
+	                        waitpid(pid, &status, WUNTRACED);
+	                    }
+	                    p->completed = true;
+>>>>>>> 13a6441a7bb5ad3caab34326dbcc801cd71c6309
 
                 /* Transfer control back to the shell */
                 tcsetpgrp(shell_terminal, dsh_pgid);
