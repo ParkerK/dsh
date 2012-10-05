@@ -205,18 +205,39 @@ void continue_job(job_t *j) {
  * */
 
 void spawn_job(job_t *j, bool fg) {
-if (job_is_completed(j))
+	if (job_is_completed(j))
 	{
 		return;
 	}
 
-
 	pid_t pid;
 	process_t *p;
     pid_t dsh_pgid = tcgetpgrp(shell_terminal);
+
+    // Set up pipe
+    int pipefd[2];
+    pipe(pipefd);
+    int pipe_in = pipefd[0];
+    int pipe_out = pipefd[1];
+
 	/* Check for input/output redirection; If present, set the IO descriptors
 	 * to the appropriate files given by the user
 	 */
+	 int new_in, new_out, old_in, old_out;
+	 if (j->ifile != NULL) {
+	 	old_in = dup(STDIN_FILENO);
+	 	// file is read only
+	 	new_in = open(j->ifile, O_RDONLY); 
+	 	dup2(new_in, STDIN_FILENO);
+	 }
+
+	 if (j->ofile != NULL) {
+	 	old_out = dup(STDOUT_FILENO);
+	 	// file is a new, write-only file that will be created if it doesn't exist already
+	 	// file has permissions 644 (-rw-r--r--)
+	 	new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
+	 	dup2(new_out, STDOUT_FILENO);
+	 }
 
 
 	/* A job can contain a pipeline; Loop through process and set up pipes accordingly */
@@ -254,14 +275,14 @@ if (job_is_completed(j))
 
 
 				/* execute the command through exec_ call */
-                    // Using PATH
+                    // Using PATH to find commands
                     extern char **environ;
                     char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
                     environ = env_args;
-    				if (p->argv[0] != NULL) {
+                    if (p->argv[0] != NULL) {
                   		execvp(p->argv[0], p->argv);
                 	}
-                	exit(0);
+                    exit(0);
 			   default: /* parent */
 				/* establish child process group here to avoid race
 				* conditions. */
@@ -271,23 +292,32 @@ if (job_is_completed(j))
 				setpgid(pid, j->pgid);
 			}
 
-			/* Reset file IOs if necessary */
-
-	                int status;
+	        int status;
 			if(fg){
 			    /* Wait for the job to complete */
-	                    if (pid != 0) {
-	                        waitpid(pid, &status, 0);
-	                    }
-	                    p->completed = true;
+                if (pid != 0) {
+                    waitpid(pid, &status, 0);
+                }
+                p->completed = true;
 
-	                    /* Transfer control back to the shell */
-	                    tcsetpgrp(shell_terminal, dsh_pgid);
+                /* Transfer control back to the shell */
+                tcsetpgrp(shell_terminal, dsh_pgid);
 			}
 			else {
 			    /* Background job */
 			}
 		}
+	}
+
+	/* Reset file IOs if necessary */
+	if (j->ifile != NULL) {
+			close(new_in);
+			dup2(old_in, STDIN_FILENO);
+	}
+
+	if (j->ofile != NULL) {
+		close(new_out);
+		dup2(old_out, STDOUT_FILENO);
 	}
 }
 
