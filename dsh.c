@@ -618,15 +618,15 @@ bool isBuiltIn(process_t* process) {
         process->completed = true;
         return true;
     } else if (!strcmp(command, "bg")) {
-    	int process_value = (int)process->argv[1];
-    	printf("process value: %s\n", process_value);
-    	pid_t bg_process = tcgetpgrp(process_value);
+    	pid_t process_value = (pid_t)process->argv[1];
    	 
-    	job_t* target_job = find_job(bg_process);
+    	job_t* target_job = find_job(process_value);
     	
-    	if (find_job(bg_process) != NULL)
-   	 {printf("found!\n");
-   	  printf("%s\n", target_job->commandinfo);}
+    	if (find_job(process_value) != NULL)
+   	 {
+   	    printf("found!\n");
+   	    printf("%s\n", target_job->commandinfo);
+   	 }
     	if (target_job==NULL) {
         	target_job = find_last_job();
         	}
