@@ -46,7 +46,7 @@ typedef struct job {
         bool bg;                    /* true when & is issued on the command line */
         char *ifile;                /* stores input file name when < is issued */
         char *ofile;                /* stores output file name when > is issued */
-        int job_number;             /* job number, 1-20
+        int job_number;             /* job number, 1-20 */
 
 } job_t;
 
