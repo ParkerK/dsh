@@ -78,14 +78,12 @@ char* getStatus(job_t *j){
 void job_helper() {
 	job_t *j = first_job;
 	if(!j) return;
-	int count = 0;
 	char *status = getStatus(j);
-	printf("[%d]-\t%s\t\t%s\n", count, status, j->commandinfo);
+	printf("[%d]-\t%s\t\t%s\n", j->pgid, status, j->commandinfo);
 	while(j->next != NULL){
 		j = j->next;
-		count++;
 		status = getStatus(j);
-		printf("[%d]-\t%s\t\t%s\n", count, status, j->commandinfo);
+		printf("[%d]-\t%s\t\t%s\n", j->pgid, status, j->commandinfo);
 	}
 	free_jobs();
 
