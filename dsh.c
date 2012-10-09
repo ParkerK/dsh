@@ -80,11 +80,12 @@ void job_helper() {
 	job_t *j = first_job;
 	if(!j) return;
 	char *status = getStatus(j);
-	printf("[%d]-\t%s\t\t%s\n", j->job_number, status, j->commandinfo);
-	while(j->next != NULL){
+	while(j != NULL){
+		if (strcmp(j->commandinfo, "jobs") != 0) {
+			status = getStatus(j);
+			printf("[%d]-\t%s\t\t%s\n", j->job_number, status, j->commandinfo);
+			}
 		j = j->next;
-		status = getStatus(j);
-		printf("[%d]-\t%s\t\t%s\n", j->job_number, status, j->commandinfo);
 	}
 	free_jobs();
 
@@ -113,6 +114,7 @@ process_t *find_last_process(job_t *j) {
 
 bool is_job_number_taken(int i){
 	job_t *j = first_job;
+
 	while(j != NULL) {
 		if (j->job_number == i)
 			return true;
@@ -124,6 +126,7 @@ bool is_job_number_taken(int i){
 
 void assign_job_id(job_t *j) {
 	int i = 1;
+	if (j->job_number != NULL) return;
 	while (i<=20)
 	{
 		if (! is_job_number_taken(i) ) {
