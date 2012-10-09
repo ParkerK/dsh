@@ -126,7 +126,7 @@ bool is_job_number_taken(int i){
 
 void assign_job_id(job_t *j) {
 	int i = 1;
-	if (j->job_number != NULL) return;
+	if (j->job_number > 0) return;
 	while (i<=20)
 	{
 		if (! is_job_number_taken(i) ) {
