@@ -27,7 +27,8 @@ bool free_job(job_t *j);
 bool isBuiltIn(process_t* process);
 void job_helper();
 void free_jobs();
-
+bool is_job_number_taken(int i);
+void assign_job_id(job_t *j);
 /* Initializing the header for the job list. The active jobs are linked into a list. */
 job_t *first_job = NULL;
 
@@ -79,11 +80,12 @@ void job_helper() {
 	job_t *j = first_job;
 	if(!j) return;
 	char *status = getStatus(j);
-	printf("[%d]-\t%s\t\t%s\n", j->pgid, status, j->commandinfo);
-	while(j->next != NULL){
+	while(j != NULL){
+		if (strcmp(j->commandinfo, "jobs") != 0) {
+			status = getStatus(j);
+			printf("[%d]-\t%s\t\t%s\n", j->job_number, status, j->commandinfo);
+			}
 		j = j->next;
-		status = getStatus(j);
-		printf("[%d]-\t%s\t\t%s\n", j->pgid, status, j->commandinfo);
 	}
 	free_jobs();
 
@@ -110,6 +112,31 @@ process_t *find_last_process(job_t *j) {
 		{s = p;
 		 p = p->next;}
 	return s;
+}
+
+bool is_job_number_taken(int i){
+	job_t *j = first_job;
+
+	while(j != NULL) {
+		if (j->job_number == i)
+			return true;
+		j = j->next;
+	}
+	return false;
+
+}
+
+void assign_job_id(job_t *j) {
+	int i = 1;
+	if (j->job_number != NULL) return;
+	while (i<=20)
+	{
+		if (! is_job_number_taken(i) ) {
+			j->job_number=i;
+			return;
+		}
+		i++;
+	}
 }
 
 bool free_job(job_t *j) {
@@ -299,6 +326,7 @@ void spawn_job(job_t *j, bool fg) {
 				if (j->pgid <= 0)
 					j->pgid = pid;
 				setpgid(pid, j->pgid);
+				assign_job_id(j);
 			}
 
 	        int status;
