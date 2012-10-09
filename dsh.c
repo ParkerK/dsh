@@ -647,25 +647,8 @@ bool isBuiltIn(process_t* process) {
     	continue_job(target_job);
     	process->completed = true;
         return true;
-    } else if (!strcmp(command, "test")) {
-    	printf("tcgetpgrp results: \n");
-    	int zero = 0;
-    	int one = 1;
-    	int two = 2;
-    	
-    	pid_t process_zero = tcgetpgrp(zero);
-    	pid_t process_one = tcgetpgrp(one);
-    	pid_t process_two = tcgetpgrp(two);
-    	
-    	job_t* job_zero = find_job(tcgetpgrp(0));
-    	job_t* job_one = find_job(tcgetpgrp(1));
-    	job_t* job_two = find_job(tcgetpgrp(2));
-    	
-    	printf("process group 0: %s\n", job_zero->commandinfo);
-    	printf("process group 1: %s\n", job_one->commandinfo);
-    	printf("process group 2: %s\n", job_two->commandinfo);
     } else if (!strcmp(command, "jobs")) {
-        print_job();
+        job_helper();
         process->completed = true;
         return true;
     } else if (!strcmp(command, "pwd")) {
