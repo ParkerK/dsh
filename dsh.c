@@ -106,10 +106,12 @@ job_t *find_last_job() {
 process_t *find_last_process(job_t *j) {
 
 	process_t *p = j->first_process;
+	process_t *s = j->first_process;
 	if(!p) return NULL;
 	while(p->next != NULL)
-		p = p->next;
-	return p;
+		{s = p;
+		 p = p->next;}
+	return s;
 }
 
 bool free_job(job_t *j) {
@@ -288,6 +290,7 @@ void spawn_job(job_t *j, bool fg) {
                     char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
                     environ = env_args;
                     if (p->argv[0] != NULL) {
+                    		p->stopped=false;
                   		execvp(p->argv[0], p->argv);
                 	}
                     exit(0);
@@ -618,15 +621,19 @@ bool isBuiltIn(process_t* process) {
         return true;
     } else if (!strcmp(command, "bg")) {
     	int process_value = (int)process->argv[1];
+    	printf("process value: %s\n", process_value);
     	pid_t bg_process = tcgetpgrp(process_value);
    	 
     	job_t* target_job = find_job(bg_process);
-   	 
+    	
+    	if (find_job(bg_process) != NULL)
+   	 {printf("found!\n");
+   	  printf("%s\n", target_job->commandinfo);}
     	if (target_job==NULL) {
         	target_job = find_last_job();
         	}
-       	 
-    	continue_job(target_job);
+	
+	continue_job(target_job);
     	process->completed = true;
         return true;
     } else if (!strcmp(command, "fg")) {
@@ -642,8 +649,25 @@ bool isBuiltIn(process_t* process) {
     	continue_job(target_job);
     	process->completed = true;
         return true;
+    } else if (!strcmp(command, "test")) {
+    	printf("tcgetpgrp results: \n");
+    	int zero = 0;
+    	int one = 1;
+    	int two = 2;
+    	
+    	pid_t process_zero = tcgetpgrp(zero);
+    	pid_t process_one = tcgetpgrp(one);
+    	pid_t process_two = tcgetpgrp(two);
+    	
+    	job_t* job_zero = find_job(tcgetpgrp(0));
+    	job_t* job_one = find_job(tcgetpgrp(1));
+    	job_t* job_two = find_job(tcgetpgrp(2));
+    	
+    	printf("process group 0: %s\n", job_zero->commandinfo);
+    	printf("process group 1: %s\n", job_one->commandinfo);
+    	printf("process group 2: %s\n", job_two->commandinfo);
     } else if (!strcmp(command, "jobs")) {
-        job_helper();
+        print_job();
         process->completed = true;
         return true;
     } else if (!strcmp(command, "pwd")) {
