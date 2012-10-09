@@ -21,6 +21,7 @@ int shell_is_interactive;
 void init_shell();
 void spawn_job(job_t *j, bool fg);
 job_t * find_job(pid_t pgid);
+job_t * find_job_int(int job_number);
 int job_is_stopped(job_t *j);
 int job_is_completed(job_t *j);
 bool free_job(job_t *j);
@@ -39,6 +40,17 @@ job_t *find_job(pid_t pgid) {
 	for(j = first_job; j; j = j->next)
 		if(j->pgid == pgid)
 	    		return j;
+	return NULL;
+}
+
+job_t *find_job_int(int job_number) {
+	job_t *j;
+	for (j = first_job; j; j = j->next)
+	{
+		printf("job number: %d\n", j->job_number);
+		if(j->job_number == job_number)
+			return j;
+	}
 	return NULL;
 }
 
@@ -128,7 +140,7 @@ bool is_job_number_taken(int i){
 
 void assign_job_id(job_t *j) {
 	int i = 1;
-	if (j->job_number != NULL) return;
+	if (j->job_number > 0) return;
 	while (i<=20)
 	{
 		if (! is_job_number_taken(i) ) {
@@ -646,16 +658,19 @@ bool isBuiltIn(process_t* process) {
         process->completed = true;
         return true;
     } else if (!strcmp(command, "bg")) {
-    	pid_t process_value = (pid_t)process->argv[1];
+    	int job_number = (int)process->argv[1];
    	 
-    	job_t* target_job = find_job(process_value);
+   	printf("bg input: %s\n", process->argv[1]);
+   	
+    	job_t* target_job = find_job_int(job_number);
     	
-    	if (find_job(process_value) != NULL)
+    	if (find_job_int(job_number) != NULL)
    	 {
    	    printf("found!\n");
    	    printf("%s\n", target_job->commandinfo);
    	 }
     	if (target_job==NULL) {
+    		printf("NULL JOB\n");
         	target_job = find_last_job();
         	}
 	
