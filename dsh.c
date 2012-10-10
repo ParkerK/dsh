@@ -696,11 +696,13 @@ bool isBuiltIn(job_t* j) {
 	process_t* process = j->first_process;
     char* command = process->argv[0];
 	if (command == NULL) {
+		free_jobs(j);
     	return true;
 	}
     if (!strcmp(command, "cd")) {
         chdir(process->argv[1]);
         process->completed = true;
+        free_jobs(j);
         return true;
     } else if (!strcmp(command, "bg")) {
     	int job_number = atoi(process->argv[1]);
@@ -715,6 +717,7 @@ bool isBuiltIn(job_t* j) {
         job_continue(target_job);
 		continue_job(target_job);
 	process->completed=true;
+		free_jobs(j);
         return true;
     } else if (!strcmp(command, "fg")) {
     	int job_number = atoi(process->argv[1]);
@@ -734,10 +737,12 @@ bool isBuiltIn(job_t* j) {
 //        tcgetattr (shell_terminal, &target_job->tmodes);
 //        tcsetattr (shell_terminal, TCSADRAIN, &shell_tmodes);
     	process->completed = true;
+    	free_jobs(j);
         return true;
     } else if (!strcmp(command, "jobs")) {
         job_helper();
         process->completed = true;
+        free_jobs(j);
         return true;
     } 
     return false;
