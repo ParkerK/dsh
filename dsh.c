@@ -24,7 +24,7 @@ job_t * find_job_int(int job_number);
 int job_is_stopped(job_t *j);
 int job_is_completed(job_t *j);
 bool free_job(job_t *j);
-bool isBuiltIn(process_t* process);
+bool isBuiltIn(job_t* j);
 void job_helper();
 void free_jobs();
 bool is_job_number_taken(int i);
@@ -342,7 +342,7 @@ void spawn_job(job_t *j, bool fg) {
 /* The code below provides an example on how to set the process context for each command */
 infile = j->mystdin;
 for(p = j->first_process; p; p = p->next) {
-if (!isBuiltIn(p)) {
+if (!isBuiltIn(j)) {
 
 			/* Set up pipes, if necessary.  */
             if (p->next) {
@@ -692,7 +692,8 @@ char* promptmsg() {
         return  "dsh$ ";
 }
 
-bool isBuiltIn(process_t* process) {
+bool isBuiltIn(job_t* j) {
+	process_t* process = j->first_process;
     char* command = process->argv[0];
 	if (command == NULL) {
     	return true;
@@ -712,7 +713,7 @@ bool isBuiltIn(process_t* process) {
         	
         target_job->bg = true;
         job_continue(target_job);
-	continue_job(target_job);
+		continue_job(target_job);
 	process->completed=true;
         return true;
     } else if (!strcmp(command, "fg")) {
