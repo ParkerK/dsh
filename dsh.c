@@ -102,7 +102,7 @@ void job_helper() {
 	while(j != NULL){
 		if (strcmp(j->commandinfo, "jobs") != 0) {
 			status = getStatus(j);
-			printf("[%d]-\t%s\t\t%s\n", j->job_number, status, j->commandinfo);
+			printf("[%d]-\t%s\t\t:%s:\n", j->job_number, status, j->commandinfo);
 			}
 		j = j->next;
 	}
