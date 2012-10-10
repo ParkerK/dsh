@@ -246,7 +246,6 @@ void continue_job(job_t *j) {
 	
 	if(kill(-j->pgid, SIGCONT) < 0)
 		perror("kill(SIGCONT)");
-	printf("job wake up sent: %s\n", j->commandinfo);
 }
 
 
@@ -331,15 +330,15 @@ void spawn_job(job_t *j, bool fg) {
 
 
 				/* execute the command through exec_ call */
-                    // Using PATH to find commands
-                    extern char **environ;
-                    char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
-                    environ = env_args;
-                    if (p->argv[0] != NULL) {
-                    		p->stopped=false;
-                  		execvp(p->argv[0], p->argv);
-                	}
-                    exit(0);
+                    		// Using PATH to find commands
+                    		extern char **environ;
+                    		char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
+                    		environ = env_args;
+                    		if (p->argv[0] != NULL) {
+                    			p->stopped=false;
+                  			execvp(p->argv[0], p->argv);
+                  			exit(0);
+                		}
 			   default: /* parent */
 				/* establish child process group here to avoid race
 				* conditions. */
@@ -353,20 +352,22 @@ void spawn_job(job_t *j, bool fg) {
 	        int status;
 			if(fg){
 			    /* Wait for the job to complete */
-                if (pid != 0) {
-                    waitpid(pid, &status, WUNTRACED);
-                }
-                if (status == 0)
-                {p->completed = true;}
-                else
-                {p->completed = true;
-                 p->stopped = true;}
+                		if (pid != 0) {
+                    			waitpid(pid, &status, WUNTRACED|WNOHANG);
+                		}
+                		if (status == 0) {
+                			p->completed = true;
+                		}
+                		else {
+                			p->completed = true;
+                 			p->stopped = true;
+                 		}
 
-                /* Transfer control back to the shell */
-                tcsetpgrp(shell_terminal, dsh_pgid);
+                		/* Transfer control back to the shell */
+                		tcsetpgrp(shell_terminal, dsh_pgid);
 			}
 			else {
-			    /* Background job */
+			    pid = waitpid (WAIT_ANY, &status, WUNTRACED);
 			}
 		}
 	}
@@ -690,6 +691,8 @@ bool isBuiltIn(process_t* process) {
        	 
     	tcsetpgrp(shell_terminal, target_job->pgid);
     	continue_job(target_job);
+    	
+    	wait_for_job(target_job);
     	
         
 //        wait_for_job(target_job);
