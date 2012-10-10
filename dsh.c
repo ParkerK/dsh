@@ -438,6 +438,7 @@ assign_job_id(j);
 	}
 	else {
 		while ( waitpid (-1, NULL , WNOHANG ) > 0) {
+			printf("bg job completed!");
 			p->completed = true;
 		}
    	/* Background job */
