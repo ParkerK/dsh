@@ -695,7 +695,7 @@ char* promptmsg() {
 bool isBuiltIn(process_t* process) {
     char* command = process->argv[0];
 	if (command == NULL) {
-    	return false;
+    	return true;
 	}
     if (!strcmp(command, "cd")) {
         chdir(process->argv[1]);
@@ -738,13 +738,13 @@ bool isBuiltIn(process_t* process) {
         job_helper();
         process->completed = true;
         return true;
-    } else if (!strcmp(command, "pwd")) {
-        char directory[FILENAME_MAX];
-        getcwd(directory, sizeof(directory));
-        printf("%s\n",directory);
-        process->completed = true;
-        return true;
-    }
+    // } else if (!strcmp(command, "pwd")) {
+    //     char directory[FILENAME_MAX];
+    //     getcwd(directory, sizeof(directory));
+    //     printf("%s\n",directory);
+    //     process->completed = true;
+    //     return true;
+    } 
     return false;
 }
 
