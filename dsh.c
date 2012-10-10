@@ -399,8 +399,8 @@ if (!isBuiltIn(p)) {
 	}
 	else {
 		while ( waitpid (-1, NULL , WNOHANG ) > 0) {
-			printf("bg job completed!");
 			p->completed = true;
+			p->stopped = false;
 		}
    	/* Background job */
 	}
