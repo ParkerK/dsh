@@ -248,6 +248,47 @@ void continue_job(job_t *j) {
 		perror("kill(SIGCONT)");
 }
 
+/* Launch a process using the given in and outfiles */
+void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg) {
+
+        if (fg) {
+	        /* establish a new process group, and put the child in
+			* foreground if requested
+			*/
+			if (pgid < 0) /* init sets -ve to a new process */
+				pgid = getpid();
+			p->pid = 0;
+
+			if (!setpgid(0,pgid)) //setpgid (pid, pgid); is this right?
+				if(fg) // If success and fg is set
+				    tcsetpgrp(shell_terminal, pgid); // assign the terminal
+
+			/* Set the handling for job control signals back to the default. */
+			signal(SIGTTOU, SIG_DFL);
+        }
+     
+        /* Set the standard input/output channels of the new process.  */
+        if (infile != STDIN_FILENO) {
+            dup2 (infile, STDIN_FILENO);
+            close (infile);
+        }
+        if (outfile != STDOUT_FILENO) {
+            dup2 (outfile, STDOUT_FILENO);
+            close (outfile);
+        }
+     
+        /* Exec the new process.  Make sure we exit.  */
+        /* execute the command through exec_ call */
+        // Using PATH to find commands
+        extern char **environ;
+        char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
+        environ = env_args;
+        if (p->argv[0] != NULL) {
+    		p->stopped=false;
+      		execvp(p->argv[0], p->argv);
+    	}
+}
+
 
 /* Spawning a process with job control. fg is true if the
  * newly-created process is to be placed in the foreground.
@@ -270,29 +311,34 @@ void spawn_job(job_t *j, bool fg) {
     pid_t dsh_pgid = tcgetpgrp(shell_terminal);
 
     // Set up pipe
-    int pipefd[2];
-    pipe(pipefd);
-    int pipe_in = pipefd[0];
-    int pipe_out = pipefd[1];
+    // int pipefd[2];
+    // pipe(pipefd);
+    // int pipe_in = pipefd[0];
+    // int pipe_out = pipefd[1];
+
+    /* TEST CODE BEGIN */
+    int mypipe[2], infile, outfile;
+    /* TEST CODE END */
 
 	/* Check for input/output redirection; If present, set the IO descriptors
 	 * to the appropriate files given by the user
 	 */
-	 int new_in, new_out, old_in, old_out;
-	 if (j->ifile != NULL) {
-	 	old_in = dup(STDIN_FILENO);
-	 	// file is read only
-	 	new_in = open(j->ifile, O_RDONLY); 
-	 	dup2(new_in, STDIN_FILENO);
-	 }
+	 // OLD CODE
+	 // int new_in, new_out, old_in, old_out;
+	 // if (j->ifile != NULL) {
+	 // 	old_in = dup(STDIN_FILENO);
+	 // 	// file is read only
+	 // 	new_in = open(j->ifile, O_RDONLY); 
+	 // 	dup2(new_in, STDIN_FILENO);
+	 // }
 
-	 if (j->ofile != NULL) {
-	 	old_out = dup(STDOUT_FILENO);
-	 	// file is a new, write-only file that will be created if it doesn't exist already
-	 	// file has permissions 644 (-rw-r--r--)
-	 	new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
-	 	dup2(new_out, STDOUT_FILENO);
-	 }
+	 // if (j->ofile != NULL) {
+	 // 	old_out = dup(STDOUT_FILENO);
+	 // 	// file is a new, write-only file that will be created if it doesn't exist already
+	 // 	// file has permissions 644 (-rw-r--r--)
+	 // 	new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
+	 // 	dup2(new_out, STDOUT_FILENO);
+	 // }
 
 
 	/* A job can contain a pipeline; Loop through process and set up pipes accordingly */
@@ -303,16 +349,32 @@ void spawn_job(job_t *j, bool fg) {
          */
 
 	/* The code below provides an example on how to set the process context for each command */
-
+	infile = j->mystdin;
 	for(p = j->first_process; p; p = p->next) {
 		if (!isBuiltIn(p)) {
+
+			/* TEST CODE BEGIN */
+			/* Set up pipes, if necessary.  */
+            if (p->next) {
+                if (pipe(mypipe) < 0) {
+                   	perror ("pipe");
+                   	exit (1);
+                }
+                outfile = mypipe[1];
+            }
+            else {
+             	outfile = j->mystdout;
+            }
+         	/* END TEST CODE */
+
 			switch (pid = fork()) {
 
 			   case -1: /* fork failure */
-				perror("fork");
-				exit(EXIT_FAILURE);
+					perror("fork");
+					exit(EXIT_FAILURE);
 
 			   case 0: /* child */
+<<<<<<< HEAD
 
 			       /* establish a new process group, and put the child in
 				* foreground if requested
@@ -339,19 +401,59 @@ void spawn_job(job_t *j, bool fg) {
                   			execvp(p->argv[0], p->argv);
                   			exit(0);
                 		}
+=======
+					// OLD CODE
+			  //      /* establish a new process group, and put the child in
+					// * foreground if requested
+					// */
+					// if (j->pgid < 0) /* init sets -ve to a new process */
+					// 	j->pgid = getpid();
+					// p->pid = 0;
+
+					// if (!setpgid(0,j->pgid))
+					// 	if(fg) // If success and fg is set
+					// 	     tcsetpgrp(shell_terminal, j->pgid); // assign the terminal
+
+					// /* Set the handling for job control signals back to the default. */
+					// signal(SIGTTOU, SIG_DFL);
+
+
+					// /* execute the command through exec_ call */
+	    //             // Using PATH to find commands
+	    //             extern char **environ;
+	    //             char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
+	    //             environ = env_args;
+	    //             if (p->argv[0] != NULL) {
+	    //             		p->stopped=false;
+	    //           		execvp(p->argv[0], p->argv);
+	    //         	}
+	    //             exit(0);
+
+					launch_process (p, j->pgid, infile, outfile, fg);
+>>>>>>> 1d5aa1ad4939d661b29220fd14ad86ad2b988574
 			   default: /* parent */
-				/* establish child process group here to avoid race
-				* conditions. */
-				p->pid = pid;
-				if (j->pgid <= 0)
-					j->pgid = pid;
-				setpgid(pid, j->pgid);
-				assign_job_id(j);
+					/* establish child process group here to avoid race
+					* conditions. */
+					p->pid = pid;
+					if (j->pgid <= 0)
+						j->pgid = pid;
+					setpgid(pid, j->pgid);
+					assign_job_id(j);
 			}
+			
+			/* TEST CODE BEGIN */
+			/* Clean up after pipes.  */
+            if (infile != j->mystdin)
+                close (infile);
+            if (outfile != j->mystdout)
+                close (outfile);
+            infile = mypipe[0];
+            /* END TEST CODE */
 
 	        int status;
 			if(fg){
 			    /* Wait for the job to complete */
+<<<<<<< HEAD
                 		if (pid != 0) {
                     			waitpid(pid, &status, WUNTRACED|WNOHANG);
                 		}
@@ -365,6 +467,20 @@ void spawn_job(job_t *j, bool fg) {
 
                 		/* Transfer control back to the shell */
                 		tcsetpgrp(shell_terminal, dsh_pgid);
+=======
+                if (pid != 0) {
+                    waitpid(pid, &status, WUNTRACED);
+                }
+                if (status == 0)
+                {p->completed = true;}
+                else {
+                	p->completed = true;
+                 	p->stopped = true;
+                }
+
+                /* Transfer control back to the shell */
+                tcsetpgrp(shell_terminal, dsh_pgid);
+>>>>>>> 1d5aa1ad4939d661b29220fd14ad86ad2b988574
 			}
 			else {
 			    pid = waitpid (WAIT_ANY, &status, WUNTRACED);
@@ -373,15 +489,15 @@ void spawn_job(job_t *j, bool fg) {
 	}
 
 	/* Reset file IOs if necessary */
-	if (j->ifile != NULL) {
-			close(new_in);
-			dup2(old_in, STDIN_FILENO);
-	}
+	// if (j->ifile != NULL) {
+	// 		close(new_in);
+	// 		dup2(old_in, STDIN_FILENO);
+	// }
 
-	if (j->ofile != NULL) {
-		close(new_out);
-		dup2(old_out, STDOUT_FILENO);
-	}
+	// if (j->ofile != NULL) {
+	// 	close(new_out);
+	// 	dup2(old_out, STDOUT_FILENO);
+	// }
 }
 
 bool init_job(job_t *j) {
