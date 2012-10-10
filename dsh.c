@@ -38,11 +38,11 @@ job_t *find_job(pid_t pgid) {
 	job_t *j;
 	for(j = first_job; j; j = j->next)
 		if(j->pgid == pgid)
-	    		return j;
+				return j;
 	return NULL;
 }
 
-     
+	 
 job_t *find_job_int(int job_number) {
 	job_t *j;
 	for (j = first_job; j; j = j->next)
@@ -61,7 +61,7 @@ int job_is_stopped(job_t *j) {
 	{
 		printf("%d\t%d\n", p->completed, p->stopped);
 		if(!p->completed && !p->stopped)
-	    		return 0;
+				return 0;
 	 }
 	return 1;
 }
@@ -80,16 +80,16 @@ int job_is_completed(job_t *j) {
 	process_t *p;
 	for(p = j->first_process; p; p = p->next)
 		if(!p->completed)
-	    		return 0;
+				return 0;
 	return 1;
 }
 
 //Stephen Made this method
 void job_continue(job_t *j) {
-       process_t *p;
-       for (p = j->first_process; p; p = p->next)
-         {p->stopped = 0; p->completed = 0;}
-       j->notified = 0;
+	   process_t *p;
+	   for (p = j->first_process; p; p = p->next)
+		 {p->stopped = 0; p->completed = 0;}
+	   j->notified = 0;
 }
 
 char* getStatus(job_t *j){
@@ -241,22 +241,22 @@ void remove_job(job_t* j) {
 
 void init_shell() {
 
-  	/* See if we are running interactively.  */
+	/* See if we are running interactively.  */
 	shell_terminal = STDIN_FILENO;
 	/* isatty test whether a file descriptor referes to a terminal */
 	shell_is_interactive = isatty(shell_terminal);
 
 	if(shell_is_interactive) {
-    		/* Loop until we are in the foreground.  */
-    		while(tcgetpgrp(shell_terminal) != (shell_pgid = getpgrp()))
-      			kill(- shell_pgid, SIGTTIN);
+			/* Loop until we are in the foreground.  */
+			while(tcgetpgrp(shell_terminal) != (shell_pgid = getpgrp()))
+				kill(- shell_pgid, SIGTTIN);
 
-    		/* Ignore interactive and job-control signals.  */
-                /* If tcsetpgrp() is called by a member of a background process
-                 * group in its session, and the calling process is not blocking or
-                 * ignoring  SIGTTOU,  a SIGTTOU signal is sent to all members of
-                 * this background process group.
-                 */
+			/* Ignore interactive and job-control signals.  */
+				/* If tcsetpgrp() is called by a member of a background process
+				 * group in its session, and the calling process is not blocking or
+				 * ignoring  SIGTTOU,  a SIGTTOU signal is sent to all members of
+				 * this background process group.
+				 */
 
 		signal(SIGTTOU, SIG_IGN);
 
@@ -285,7 +285,7 @@ void continue_job(job_t *j) {
 /* Launch a process using the given in and outfiles */
 void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg) {
 
-        /* establish a new process group, and put the child in
+		/* establish a new process group, and put the child in
 		* foreground if requested
 		*/
 		if (pgid < 0) /* init sets -ve to a new process */
@@ -294,31 +294,31 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
 
 		if (!setpgid(0,pgid)) //setpgid (pid, pgid); is this right?
 			if(fg) // If success and fg is set
-			    tcsetpgrp(shell_terminal, pgid); // assign the terminal
+				tcsetpgrp(shell_terminal, pgid); // assign the terminal
 
 		/* Set the handling for job control signals back to the default. */
 		signal(SIGTTOU, SIG_DFL);
-     
-        /* Set the standard input/output channels of the new process.  */
-        if (infile != STDIN_FILENO) {
-            dup2 (infile, STDIN_FILENO);
-            close (infile);
-        }
-        if (outfile != STDOUT_FILENO) {
-            dup2 (outfile, STDOUT_FILENO);
-            close (outfile);
-        }
-     
-        /* Exec the new process.  Make sure we exit.  */
-        /* execute the command through exec_ call */
-        // Using PATH to find commands
-        extern char **environ;
-        char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
-        environ = env_args;
-        if (p->argv[0] != NULL) {
-    		p->stopped=false;
-      		execvp(p->argv[0], p->argv);
-    	}
+	 
+		/* Set the standard input/output channels of the new process.  */
+		if (infile != STDIN_FILENO) {
+			dup2 (infile, STDIN_FILENO);
+			close (infile);
+		}
+		if (outfile != STDOUT_FILENO) {
+			dup2 (outfile, STDOUT_FILENO);
+			close (outfile);
+		}
+	 
+		/* Exec the new process.  Make sure we exit.  */
+		/* execute the command through exec_ call */
+		// Using PATH to find commands
+		extern char **environ;
+		char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
+		environ = env_args;
+		if (p->argv[0] != NULL) {
+			p->stopped=false;
+			execvp(p->argv[0], p->argv);
+		}
 }
 
 
@@ -335,26 +335,26 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
 void spawn_job(job_t *j, bool fg) {
 	pid_t pid;
 	process_t *p;
-    pid_t dsh_pgid = tcgetpgrp(shell_terminal);
-    int mypipe[2], infile, outfile;
+	pid_t dsh_pgid = tcgetpgrp(shell_terminal);
+	int mypipe[2], infile, outfile;
 
 	/* Check for input/output redirection; If present, set the IO descriptors
 	 * to the appropriate files given by the user
 	 */
 	 int new_in, new_out, old_in, old_out;
 	 if (j->ifile != NULL) {
-	 	old_in = dup(STDIN_FILENO);
-	 	// file is read only
-	 	new_in = open(j->ifile, O_RDONLY); 
-	 	dup2(new_in, STDIN_FILENO);
+		old_in = dup(STDIN_FILENO);
+		// file is read only
+		new_in = open(j->ifile, O_RDONLY); 
+		dup2(new_in, STDIN_FILENO);
 	 }
 
 	 if (j->ofile != NULL) {
-	 	old_out = dup(STDOUT_FILENO);
-	 	// file is a new, write-only file that will be created if it doesn't exist already
-	 	// file has permissions 644 (-rw-r--r--)
-	 	new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
-	 	dup2(new_out, STDOUT_FILENO);
+		old_out = dup(STDOUT_FILENO);
+		// file is a new, write-only file that will be created if it doesn't exist already
+		// file has permissions 644 (-rw-r--r--)
+		new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
+		dup2(new_out, STDOUT_FILENO);
 	 }
 
 
@@ -364,7 +364,7 @@ void spawn_job(job_t *j, bool fg) {
 
 /* For each command (process), fork to create a new process context,
 * set the process group, and execute the command
-         */
+		 */
 
 /* The code below provides an example on how to set the process context for each command */
 infile = j->mystdin;
@@ -373,16 +373,16 @@ for(p = j->first_process; p; p = p->next) {
 if (!isBuiltIn(j)) {
 
 			/* Set up pipes, if necessary.  */
-            if (p->next) {
-                if (pipe(mypipe) < 0) {
-                    perror ("pipe");
-                    exit (1);
-                }
-                outfile = mypipe[1];
-            }
-            else {
-              outfile = j->mystdout;
-            }
+			if (p->next) {
+				if (pipe(mypipe) < 0) {
+					perror ("pipe");
+					exit (1);
+				}
+				outfile = mypipe[1];
+			}
+			else {
+			  outfile = j->mystdout;
+			}
 
 			switch (pid = fork()) {
 
@@ -403,29 +403,29 @@ if (!isBuiltIn(j)) {
 			}
 			
 			/* Clean up after pipes.  */
-            if (infile != j->mystdin)
-                close (infile);
-            if (outfile != j->mystdout)
-                close (outfile);
-            infile = mypipe[0];
+			if (infile != j->mystdin)
+				close (infile);
+			if (outfile != j->mystdout)
+				close (outfile);
+			infile = mypipe[0];
 
-       int status;
+	   int status;
 	if(fg){
-   	/* Wait for the job to complete */
-                if (pid != 0) {
-                    waitpid(pid, &status, WUNTRACED);
-                }
-                if (status == 0) {
-                p->completed = true;
-                p->stopped = true;
+	/* Wait for the job to complete */
+				if (pid != 0) {
+					waitpid(pid, &status, WUNTRACED);
 				}
-                else {
-                p->completed = false;
-                p->stopped = true;
-                }
+				if (status == 0) {
+				p->completed = true;
+				p->stopped = true;
+				}
+				else {
+				p->completed = false;
+				p->stopped = true;
+				}
 
-                /* Transfer control back to the shell */
-                tcsetpgrp(shell_terminal, dsh_pgid);
+				/* Transfer control back to the shell */
+				tcsetpgrp(shell_terminal, dsh_pgid);
 	}
 	else {
 		while ( waitpid (-1, &status , WNOHANG ) > 0) {
@@ -487,8 +487,8 @@ bool init_process(process_t *p) {
 	p->argc = 0;
 	p->next = NULL;
 
-        if(!(p->argv = (char **)calloc(MAX_ARGS,sizeof(char *))))
-                return false;
+		if(!(p->argv = (char **)calloc(MAX_ARGS,sizeof(char *))))
+				return false;
 
 	return true;
 }
@@ -585,10 +585,10 @@ bool readcmdline(char *msg) {
 		if(cmdline[cmdline_pos] == '\n' || cmdline[cmdline_pos] == '\0' || feof(stdin))
 			return false;
 
-                /* Check for invalid special symbols (characters) */
-                if(cmdline[cmdline_pos] == ';' || cmdline[cmdline_pos] == '&'
-                        || cmdline[cmdline_pos] == '<' || cmdline[cmdline_pos] == '>' || cmdline[cmdline_pos] == '|')
-                        return false;
+				/* Check for invalid special symbols (characters) */
+				if(cmdline[cmdline_pos] == ';' || cmdline[cmdline_pos] == '&'
+						|| cmdline[cmdline_pos] == '<' || cmdline[cmdline_pos] == '>' || cmdline[cmdline_pos] == '|')
+						return false;
 
 		char *cmd = (char *)calloc(MAX_LEN_CMDLINE, sizeof(char));
 		if(!cmd)
@@ -614,7 +614,7 @@ bool readcmdline(char *msg) {
 
 			switch (cmdline[cmdline_pos]) {
 
-			    case '<': /* input redirection */
+				case '<': /* input redirection */
 				current_job->ifile = (char *) calloc(MAX_LEN_FILENAME, sizeof(char));
 				if(!current_job->ifile)
 					return invokefree(current_job,"malloc: no space");
@@ -636,7 +636,7 @@ bool readcmdline(char *msg) {
 				valid_input = false;
 				break;
 
-			    case '>': /* output redirection */
+				case '>': /* output redirection */
 				current_job->ofile = (char *) calloc(MAX_LEN_FILENAME, sizeof(char));
 				if(!current_job->ofile)
 					return invokefree(current_job,"malloc: no space");
@@ -734,65 +734,65 @@ bool readcmdline(char *msg) {
 
 /* Build prompt messaage; Change this to include process ID (pid)*/
 char* promptmsg() {
-        return  "dsh$ ";
+		return  "dsh$ ";
 }
 
 bool isBuiltIn(job_t* j) {
 	process_t* process = j->first_process;
-    char* command = process->argv[0];
+	char* command = process->argv[0];
 	if (command == NULL) {
 		remove_job(j);
-    	return true;
+		return true;
 	}
-    if (!strcmp(command, "cd")) {
-        chdir(process->argv[1]);
-        process->completed = true;
-        remove_job(j);
-        return true;
-    }
-    else if (!strcmp(command, "bg")) {
-    	int job_number = atoi(process->argv[1]);
-   	
-    	job_t* target_job = find_job_int(job_number);
-    
-    	if (target_job==NULL) {
-        	target_job = find_last_job();
-        }
-        	
-        target_job->bg = true;
-        job_continue(target_job);
+	if (!strcmp(command, "cd")) {
+		chdir(process->argv[1]);
+		process->completed = true;
+		remove_job(j);
+		return true;
+	}
+	else if (!strcmp(command, "bg")) {
+		int job_number = atoi(process->argv[1]);
+	
+		job_t* target_job = find_job_int(job_number);
+	
+		if (target_job==NULL) {
+			target_job = find_last_job();
+		}
+			
+		target_job->bg = true;
+		job_continue(target_job);
 		continue_job(target_job);
 		process->completed=true;
 		remove_job(j);
-        return true;
-    }
-    else if (!strcmp(command, "fg")) {
-    	int job_number = atoi(process->argv[1]);
-    	job_t* target_job = find_job_int(job_number);
-   	 
-    	if (target_job==NULL) {
-        	target_job = find_last_job();
-        }
-       	 
-    	tcsetpgrp(shell_terminal, target_job->pgid);
-    	continue_job(target_job);
-    	  
+		return true;
+	}
+	else if (!strcmp(command, "fg")) {
+		int job_number = atoi(process->argv[1]);
+		job_t* target_job = find_job_int(job_number);
+	 
+		if (target_job==NULL) {
+			target_job = find_last_job();
+		}
+		 
+		tcsetpgrp(shell_terminal, target_job->pgid);
+		continue_job(target_job);
+		  
 //        wait_for_job(target_job);
 //     
 //        /* Restore the shell's terminal modes.  */
 //        tcgetattr (shell_terminal, &target_job->tmodes);
 //        tcsetattr (shell_terminal, TCSADRAIN, &shell_tmodes);
-    	process->completed = true;
-    	remove_job(j);
-        return true;
-    }
-    else if (!strcmp(command, "jobs")) {
-    	job_helper();
-    	free_jobs(j);
-    	process->completed = true;
-    	return true;
-    } 
-    return false;
+		process->completed = true;
+		remove_job(j);
+		return true;
+	}
+	else if (!strcmp(command, "jobs")) {
+		job_helper();
+		free_jobs(j);
+		process->completed = true;
+		return true;
+	} 
+	return false;
 }
 
 void print_job_list() {
@@ -817,7 +817,7 @@ int main() {
 				fflush(stdout);
 				printf("\n");
 				exit(EXIT_SUCCESS);
-                	}
+					}
 			continue; /* NOOP; user entered return or spaces with return */
 		}
 		/* Only for debugging purposes and to show parser output */
@@ -826,12 +826,12 @@ int main() {
   //       printf("\n\n");
 		print_job_list();
 
-        job_t *j;
-        for (j = first_job; j; j = j->next) {
-        	if (j->pgid < 0) {
-            	spawn_job(j, !j->bg);
-        	}
-        }
+		job_t *j;
+		for (j = first_job; j; j = j->next) {
+			if (j->pgid < 0) {
+				spawn_job(j, !j->bg);
+			}
+		}
 		/* Your code goes here */
 		/* You need to loop through jobs list since a command line can contain ;*/
 		/* Check for built-in commands */
