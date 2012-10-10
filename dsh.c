@@ -85,7 +85,7 @@ int job_is_completed(job_t *j) {
 void job_continue(job_t *j) {
        process_t *p;
        for (p = j->first_process; p; p = p->next)
-         p->stopped = 0;
+         {p->stopped = 0; p->completed = 0;}
        j->notified = 0;
 }
 
