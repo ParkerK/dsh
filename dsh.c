@@ -301,13 +301,13 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
  * */
 
 void spawn_job(job_t *j, bool fg) {
-if (job_is_completed(j))
-{
-return;
-}
+	if (job_is_completed(j))
+	{
+	return;
+	}
 
-pid_t pid;
-process_t *p;
+	pid_t pid;
+	process_t *p;
     pid_t dsh_pgid = tcgetpgrp(shell_terminal);
     int mypipe[2], infile, outfile;
 
