@@ -790,6 +790,7 @@ bool isBuiltIn(job_t* j) {
 		job_helper();
 		free_jobs(j);
 		process->completed = true;
+		remove_job(j);
 		return true;
 	} 
 	return false;
