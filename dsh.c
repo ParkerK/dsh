@@ -182,7 +182,11 @@ void free_jobs() {
 	job_t *prev = NULL;
 
 	while(curr) {
+<<<<<<< HEAD
 	if (job_is_completed(curr) )//&& !job_is_stopped(curr))
+=======
+	if (job_is_completed(curr) && !job_is_stopped(curr))
+>>>>>>> 4c51c5772401c5ce27712946104ad6a50b8defa3
 		{	
 			free_job(curr);
 			if (prev != NULL)
