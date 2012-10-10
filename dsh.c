@@ -420,7 +420,6 @@ if (!isBuiltIn(j)) {
                 /* Transfer control back to the shell */
                 tcsetpgrp(shell_terminal, dsh_pgid);
 	}
-<<<<<<< HEAD
 	else {
 		while ( waitpid (-1, &status , WNOHANG ) > 0) {
 			printf("bg exited with status: %d \n", status);
@@ -777,13 +776,8 @@ bool isBuiltIn(job_t* j) {
         return true;
     } else if (!strcmp(command, "jobs")) {
         job_helper();
-<<<<<<< HEAD
         free_jobs(j);
         process->completed = true;
-=======
-        process->completed = true;
-        remove_job(j);
->>>>>>> 5d98f0afb4a82f7e513abc50f9d3972a203a60be
         return true;
     } 
     return false;
