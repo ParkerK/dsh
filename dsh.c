@@ -749,33 +749,34 @@ bool isBuiltIn(job_t* j) {
         process->completed = true;
         remove_job(j);
         return true;
-    } else if (!strcmp(command, "bg")) {
+    }
+    else if (!strcmp(command, "bg")) {
     	int job_number = atoi(process->argv[1]);
    	
     	job_t* target_job = find_job_int(job_number);
     
     	if (target_job==NULL) {
         	target_job = find_last_job();
-        	}
+        }
         	
         target_job->bg = true;
         job_continue(target_job);
 		continue_job(target_job);
-	process->completed=true;
+		process->completed=true;
 		remove_job(j);
         return true;
-    } else if (!strcmp(command, "fg")) {
+    }
+    else if (!strcmp(command, "fg")) {
     	int job_number = atoi(process->argv[1]);
     	job_t* target_job = find_job_int(job_number);
    	 
     	if (target_job==NULL) {
         	target_job = find_last_job();
-        	}
+        }
        	 
     	tcsetpgrp(shell_terminal, target_job->pgid);
     	continue_job(target_job);
-    	
-        
+    	  
 //        wait_for_job(target_job);
 //     
 //        /* Restore the shell's terminal modes.  */
@@ -784,11 +785,12 @@ bool isBuiltIn(job_t* j) {
     	process->completed = true;
     	remove_job(j);
         return true;
-    } else if (!strcmp(command, "jobs")) {
-        job_helper();
-        free_jobs(j);
-        process->completed = true;
-        return true;
+    }
+    else if (!strcmp(command, "jobs")) {
+    	job_helper();
+    	free_jobs(j);
+    	process->completed = true;
+    	return true;
     } 
     return false;
 }
