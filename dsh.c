@@ -183,7 +183,7 @@ void free_jobs() {
 	job_t *prev = NULL;
 
 	while(curr) {
-	if (job_is_completed(curr) && !job_is_stopped(curr))
+	if (!strcmp(getStatus(curr), "Done"))
 		{	
 			free_job(curr);
 			if (prev != NULL)
