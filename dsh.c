@@ -90,7 +90,8 @@ void job_continue(job_t *j) {
 }
 
 char* getStatus(job_t *j){
-	if (job_is_stopped_real(j)) return "Stopped";
+	//if (job_is_stopped_real(j)) return "Stopped";
+	if (job_is_stopped(j)) return "Stopped";
 	if (job_is_completed(j)) return "Done";
 	return "Running";
 }
@@ -280,21 +281,19 @@ void continue_job(job_t *j) {
 /* Launch a process using the given in and outfiles */
 void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg) {
 
-        if (fg) {
-	        /* establish a new process group, and put the child in
-			* foreground if requested
-			*/
-			if (pgid < 0) /* init sets -ve to a new process */
-				pgid = getpid();
-			p->pid = 0;
+        /* establish a new process group, and put the child in
+		* foreground if requested
+		*/
+		if (pgid < 0) /* init sets -ve to a new process */
+			pgid = getpid();
+		p->pid = 0;
 
-			if (!setpgid(0,pgid)) //setpgid (pid, pgid); is this right?
-				if(fg) // If success and fg is set
-				    tcsetpgrp(shell_terminal, pgid); // assign the terminal
+		if (!setpgid(0,pgid)) //setpgid (pid, pgid); is this right?
+			if(fg) // If success and fg is set
+			    tcsetpgrp(shell_terminal, pgid); // assign the terminal
 
-			/* Set the handling for job control signals back to the default. */
-			signal(SIGTTOU, SIG_DFL);
-        }
+		/* Set the handling for job control signals back to the default. */
+		signal(SIGTTOU, SIG_DFL);
      
         /* Set the standard input/output channels of the new process.  */
         if (infile != STDIN_FILENO) {
@@ -330,11 +329,6 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
  * */
 
 void spawn_job(job_t *j, bool fg) {
-	if (job_is_completed(j))
-	{
-	return;
-	}
-
 	pid_t pid;
 	process_t *p;
     pid_t dsh_pgid = tcgetpgrp(shell_terminal);
@@ -371,6 +365,7 @@ void spawn_job(job_t *j, bool fg) {
 /* The code below provides an example on how to set the process context for each command */
 infile = j->mystdin;
 for(p = j->first_process; p; p = p->next) {
+	printf("Starting Process: %s\n\n", p->argv[0]);
 if (!isBuiltIn(j)) {
 
 			/* Set up pipes, if necessary.  */
@@ -810,7 +805,9 @@ int main() {
 
         job_t *j;
         for (j = first_job; j; j = j->next) {
-            spawn_job(j, !j->bg);
+        	if (j->pgid < 0) {
+            	spawn_job(j, !j->bg);
+        	}
         }
 		/* Your code goes here */
 		/* You need to loop through jobs list since a command line can contain ;*/
