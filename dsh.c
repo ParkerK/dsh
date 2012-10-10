@@ -303,7 +303,7 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
 void spawn_job(job_t *j, bool fg) {
 	if (job_is_completed(j))
 	{
-		return;
+	return;
 	}
 
 	pid_t pid;
@@ -399,6 +399,7 @@ if (!isBuiltIn(p)) {
 	}
 	else {
 		while ( waitpid (-1, NULL , WNOHANG ) > 0) {
+			printf("bg job completed!");
 			p->completed = true;
 		}
    	/* Background job */
