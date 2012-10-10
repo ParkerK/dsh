@@ -309,36 +309,27 @@ return;
 pid_t pid;
 process_t *p;
     pid_t dsh_pgid = tcgetpgrp(shell_terminal);
-
-    // Set up pipe
-    // int pipefd[2];
-    // pipe(pipefd);
-    // int pipe_in = pipefd[0];
-    // int pipe_out = pipefd[1];
-
-    /* TEST CODE BEGIN */
     int mypipe[2], infile, outfile;
-    /* TEST CODE END */
 
-/* Check for input/output redirection; If present, set the IO descriptors
-* to the appropriate files given by the user
-*/
-// OLD CODE
-// int new_in, new_out, old_in, old_out;
-// if (j->ifile != NULL) {
-// old_in = dup(STDIN_FILENO);
-// // file is read only
-// new_in = open(j->ifile, O_RDONLY); 
-// dup2(new_in, STDIN_FILENO);
-// }
+	/* Check for input/output redirection; If present, set the IO descriptors
+	 * to the appropriate files given by the user
+	 */
+	 int new_in, new_out, old_in, old_out;
+	 if (j->ifile != NULL) {
+	 	old_in = dup(STDIN_FILENO);
+	 	// file is read only
+	 	new_in = open(j->ifile, O_RDONLY); 
+	 	dup2(new_in, STDIN_FILENO);
+	 }
 
-// if (j->ofile != NULL) {
-// old_out = dup(STDOUT_FILENO);
-// // file is a new, write-only file that will be created if it doesn't exist already
-// // file has permissions 644 (-rw-r--r--)
-// new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
-// dup2(new_out, STDOUT_FILENO);
-// }
+	 if (j->ofile != NULL) {
+	 	old_out = dup(STDOUT_FILENO);
+	 	// file is a new, write-only file that will be created if it doesn't exist already
+	 	// file has permissions 644 (-rw-r--r--)
+	 	new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
+	 	dup2(new_out, STDOUT_FILENO);
+	 }
+
 
 
 /* A job can contain a pipeline; Loop through process and set up pipes accordingly */
@@ -353,8 +344,7 @@ infile = j->mystdin;
 for(p = j->first_process; p; p = p->next) {
 if (!isBuiltIn(p)) {
 
-/* TEST CODE BEGIN */
-/* Set up pipes, if necessary.  */
+			/* Set up pipes, if necessary.  */
             if (p->next) {
                 if (pipe(mypipe) < 0) {
                     perror ("pipe");
@@ -365,60 +355,31 @@ if (!isBuiltIn(p)) {
             else {
               outfile = j->mystdout;
             }
-          /* END TEST CODE */
 
-switch (pid = fork()) {
+			switch (pid = fork()) {
 
-  case -1: /* fork failure */
-perror("fork");
-exit(EXIT_FAILURE);
+			   case -1: /* fork failure */
+					perror("fork");
+					exit(EXIT_FAILURE);
 
-  case 0: /* child */
-// OLD CODE
- //      /* establish a new process group, and put the child in
-// * foreground if requested
-// */
-// if (j->pgid < 0) /* init sets -ve to a new process */
-// j->pgid = getpid();
-// p->pid = 0;
-
-// if (!setpgid(0,j->pgid))
-// if(fg) // If success and fg is set
-//     tcsetpgrp(shell_terminal, j->pgid); // assign the terminal
-
-// /* Set the handling for job control signals back to the default. */
-// signal(SIGTTOU, SIG_DFL);
-
-
-// /* execute the command through exec_ call */
-   //             // Using PATH to find commands
-   //             extern char **environ;
-   //             char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
-   //             environ = env_args;
-   //             if (p->argv[0] != NULL) {
-   //             p->stopped=false;
-   //           execvp(p->argv[0], p->argv);
-   //         }
-   //             exit(0);
-
-launch_process (p, j->pgid, infile, outfile, fg);
-  default: /* parent */
-/* establish child process group here to avoid race
-* conditions. */
-p->pid = pid;
-if (j->pgid <= 0)
-j->pgid = pid;
-setpgid(pid, j->pgid);
-assign_job_id(j);
-}
-/* TEST CODE BEGIN */
-/* Clean up after pipes.  */
+			   case 0: /* child */
+					launch_process (p, j->pgid, infile, outfile, fg);
+			   default: /* parent */
+					/* establish child process group here to avoid race
+					* conditions. */
+					p->pid = pid;
+					if (j->pgid <= 0)
+						j->pgid = pid;
+					setpgid(pid, j->pgid);
+					assign_job_id(j);
+			}
+			
+			/* Clean up after pipes.  */
             if (infile != j->mystdin)
                 close (infile);
             if (outfile != j->mystdout)
                 close (outfile);
             infile = mypipe[0];
-            /* END TEST CODE */
 
        int status;
 	if(fg){
@@ -446,16 +407,16 @@ assign_job_id(j);
 }
 }
 
-/* Reset file IOs if necessary */
-// if (j->ifile != NULL) {
-// close(new_in);
-// dup2(old_in, STDIN_FILENO);
-// }
+	/* Reset file IOs if necessary */
+	if (j->ifile != NULL) {
+			close(new_in);
+			dup2(old_in, STDIN_FILENO);
+	}
 
-// if (j->ofile != NULL) {
-// close(new_out);
-// dup2(old_out, STDOUT_FILENO);
-// }
+	if (j->ofile != NULL) {
+		close(new_out);
+		dup2(old_out, STDOUT_FILENO);
+	}
 }
 bool init_job(job_t *j) {
 	j->next = NULL;
