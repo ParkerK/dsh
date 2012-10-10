@@ -748,6 +748,18 @@ bool isBuiltIn(job_t* j) {
     return false;
 }
 
+void print_job_list() {
+	job_t *j;
+	printf("\nJob List:\n");
+	for(j = first_job; j; j = j->next) {
+		printf("%s", j->commandinfo);
+		if (j->next != NULL) {
+			printf(" --> ");
+		}
+	}
+	printf("\n\n");
+}
+
 int main() {
 
 	init_shell();
@@ -762,8 +774,10 @@ int main() {
 			continue; /* NOOP; user entered return or spaces with return */
 		}
 		/* Only for debugging purposes and to show parser output */
-		//print_job();
-        //printf("\n");
+		// printf("\n\nJOBS:\n");
+		// print_job();
+  //       printf("\n\n");
+		print_job_list();
 
         job_t *j;
         for (j = first_job; j; j = j->next) {
