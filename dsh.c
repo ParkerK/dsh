@@ -201,6 +201,35 @@ void free_jobs() {
 		}
 	}
 }
+
+void remove_job(job_t* j) {
+	job_t *curr = first_job;
+
+	if(!curr) return;
+	job_t *next = curr->next;
+	job_t *prev = NULL;
+
+	while(curr) {
+		if (curr == j)
+		{	
+			free_job(curr);
+			if (prev != NULL)
+				prev->next = next;
+			else
+				first_job = next; 
+			curr = next;
+			if (next != NULL)
+				next = next->next;
+		}
+	else {
+		prev = curr;
+		curr = next;
+		if (next != NULL)
+			next = next->next;
+		}
+	}
+}
+
 /* Make sure the shell is running interactively as the foreground job
  * before proceeding.
  * */
@@ -696,13 +725,13 @@ bool isBuiltIn(job_t* j) {
 	process_t* process = j->first_process;
     char* command = process->argv[0];
 	if (command == NULL) {
-		free_jobs(j);
+		remove_job(j);
     	return true;
 	}
     if (!strcmp(command, "cd")) {
         chdir(process->argv[1]);
         process->completed = true;
-        free_jobs(j);
+        remove_job(j);
         return true;
     } else if (!strcmp(command, "bg")) {
     	int job_number = atoi(process->argv[1]);
@@ -717,7 +746,7 @@ bool isBuiltIn(job_t* j) {
         job_continue(target_job);
 		continue_job(target_job);
 	process->completed=true;
-		free_jobs(j);
+		remove_job(j);
         return true;
     } else if (!strcmp(command, "fg")) {
     	int job_number = atoi(process->argv[1]);
@@ -737,12 +766,12 @@ bool isBuiltIn(job_t* j) {
 //        tcgetattr (shell_terminal, &target_job->tmodes);
 //        tcsetattr (shell_terminal, TCSADRAIN, &shell_tmodes);
     	process->completed = true;
-    	free_jobs(j);
+    	remove_job(j);
         return true;
     } else if (!strcmp(command, "jobs")) {
         job_helper();
         process->completed = true;
-        free_jobs(j);
+        remove_job(j);
         return true;
     } 
     return false;
