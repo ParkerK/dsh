@@ -63,14 +63,14 @@ int job_is_stopped(job_t *j) {
 	return 1;
 }
 
-int job_is_stopped_real(job_t *j) {
+// int job_is_stopped_real(job_t *j) {
 
-	process_t *p;
-	for(p = j->first_process; p; p = p->next)
-		if(!p->stopped)
-	    		return 0;
-	return 1;
-}
+// 	process_t *p;
+// 	for(p = j->first_process; p; p = p->next)
+// 		if(!p->stopped)
+// 	    		return 0;
+// 	return 1;
+// }
 /* Return true if all processes in the job have completed.  */
 int job_is_completed(job_t *j) {
 
@@ -420,6 +420,7 @@ if (!isBuiltIn(j)) {
                 /* Transfer control back to the shell */
                 tcsetpgrp(shell_terminal, dsh_pgid);
 	}
+<<<<<<< HEAD
 	else {
 		while ( waitpid (-1, &status , WNOHANG ) > 0) {
 			printf("bg exited with status: %d \n", status);
@@ -434,11 +435,9 @@ if (!isBuiltIn(j)) {
 				printf("bg exited\n");
 				p->completed = true;
 			}
+			
+			}
 		}
-		
-		tcsetpgrp(shell_terminal, dsh_pgid);
-   	/* Background job */
-	}
 }
 }
 
