@@ -246,7 +246,6 @@ void continue_job(job_t *j) {
 	
 	if(kill(-j->pgid, SIGCONT) < 0)
 		perror("kill(SIGCONT)");
-	printf("job wake up sent: %s\n", j->commandinfo);
 }
 
 /* Launch a process using the given in and outfiles */
@@ -302,13 +301,13 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
  * */
 
 void spawn_job(job_t *j, bool fg) {
-	if (job_is_completed(j))
-	{
-		return;
-	}
+if (job_is_completed(j))
+{
+return;
+}
 
-	pid_t pid;
-	process_t *p;
+pid_t pid;
+process_t *p;
     pid_t dsh_pgid = tcgetpgrp(shell_terminal);
     int mypipe[2], infile, outfile;
 
@@ -332,28 +331,29 @@ void spawn_job(job_t *j, bool fg) {
 	 }
 
 
-	/* A job can contain a pipeline; Loop through process and set up pipes accordingly */
+
+/* A job can contain a pipeline; Loop through process and set up pipes accordingly */
 
 
-	/* For each command (process), fork to create a new process context,
-	 * set the process group, and execute the command
+/* For each command (process), fork to create a new process context,
+* set the process group, and execute the command
          */
 
-	/* The code below provides an example on how to set the process context for each command */
-	infile = j->mystdin;
-	for(p = j->first_process; p; p = p->next) {
-		if (!isBuiltIn(p)) {
+/* The code below provides an example on how to set the process context for each command */
+infile = j->mystdin;
+for(p = j->first_process; p; p = p->next) {
+if (!isBuiltIn(p)) {
 
 			/* Set up pipes, if necessary.  */
             if (p->next) {
                 if (pipe(mypipe) < 0) {
-                   	perror ("pipe");
-                   	exit (1);
+                    perror ("pipe");
+                    exit (1);
                 }
                 outfile = mypipe[1];
             }
             else {
-             	outfile = j->mystdout;
+              outfile = j->mystdout;
             }
 
 			switch (pid = fork()) {
@@ -381,27 +381,30 @@ void spawn_job(job_t *j, bool fg) {
                 close (outfile);
             infile = mypipe[0];
 
-	        int status;
-			if(fg){
-			    /* Wait for the job to complete */
+       int status;
+	if(fg){
+   	/* Wait for the job to complete */
                 if (pid != 0) {
                     waitpid(pid, &status, WUNTRACED);
                 }
                 if (status == 0)
                 {p->completed = true;}
                 else {
-                	p->completed = true;
-                 	p->stopped = true;
+                p->completed = true;
+                  p->stopped = true;
                 }
 
                 /* Transfer control back to the shell */
                 tcsetpgrp(shell_terminal, dsh_pgid);
-			}
-			else {
-			    /* Background job */
-			}
-		}
 	}
+	else {
+		while ( waitpid (-1, NULL , WNOHANG ) > 0) {
+			p->completed = true;
+		}
+   	/* Background job */
+	}
+}
+}
 
 	/* Reset file IOs if necessary */
 	if (j->ifile != NULL) {
@@ -414,7 +417,6 @@ void spawn_job(job_t *j, bool fg) {
 		dup2(old_out, STDOUT_FILENO);
 	}
 }
-
 bool init_job(job_t *j) {
 	j->next = NULL;
 	if(!(j->commandinfo = (char *)malloc(sizeof(char)*MAX_LEN_CMDLINE)))
