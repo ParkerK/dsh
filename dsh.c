@@ -63,14 +63,14 @@ int job_is_stopped(job_t *j) {
 	return 1;
 }
 
-int job_is_stopped_real(job_t *j) {
+// int job_is_stopped_real(job_t *j) {
 
-	process_t *p;
-	for(p = j->first_process; p; p = p->next)
-		if(!p->stopped)
-	    		return 0;
-	return 1;
-}
+// 	process_t *p;
+// 	for(p = j->first_process; p; p = p->next)
+// 		if(!p->stopped)
+// 	    		return 0;
+// 	return 1;
+// }
 /* Return true if all processes in the job have completed.  */
 int job_is_completed(job_t *j) {
 
@@ -91,8 +91,8 @@ void job_continue(job_t *j) {
 
 char* getStatus(job_t *j){
 	//if (job_is_stopped_real(j)) return "Stopped";
-	if (job_is_stopped(j)) return "Stopped";
 	if (job_is_completed(j)) return "Done";
+	if (job_is_stopped(j)) return "Stopped";
 	return "Running";
 }
 
@@ -421,7 +421,7 @@ if (!isBuiltIn(j)) {
                 /* Transfer control back to the shell */
                 tcsetpgrp(shell_terminal, dsh_pgid);
 	}
-	else {
+	else { // BG process
 		while ( waitpid (-1, NULL , WNOHANG ) > 0) {
 			p->completed = true;
 			p->stopped = false;
