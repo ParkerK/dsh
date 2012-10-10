@@ -90,8 +90,8 @@ void job_continue(job_t *j) {
 }
 
 char* getStatus(job_t *j){
-	if (job_is_stopped_real(j)) return "Stopped";
 	if (job_is_completed(j)) return "Done";
+	if (job_is_stopped(j)) return "Stopped";
 	return "Running";
 }
 
@@ -182,7 +182,7 @@ void free_jobs() {
 	job_t *prev = NULL;
 
 	while(curr) {
-	if (job_is_completed(curr) && !job_is_stopped_real(curr))
+	if (job_is_completed(curr) )//&& !job_is_stopped(curr))
 		{	
 			free_job(curr);
 			if (prev != NULL)
@@ -398,10 +398,22 @@ if (!isBuiltIn(j)) {
                 tcsetpgrp(shell_terminal, dsh_pgid);
 	}
 	else {
-		while ( waitpid (-1, NULL , WNOHANG ) > 0) {
-			p->completed = true;
-			p->stopped = false;
+		while ( waitpid (-1, &status , WNOHANG ) > 0) {
+			printf("bg exited with status: %d \n", status);
+			printf("exited command: %s \n", p->argv[0]);
+			if (WIFSTOPPED(status))
+			{
+				printf("bg stopped\n");
+				p->stopped = true;
+			}
+			if (WIFEXITED(status))
+			{	
+				printf("bg exited\n");
+				p->completed = true;
+			}
 		}
+		
+		tcsetpgrp(shell_terminal, dsh_pgid);
    	/* Background job */
 	}
 }
@@ -418,6 +430,8 @@ if (!isBuiltIn(j)) {
 		dup2(old_out, STDOUT_FILENO);
 	}
 }
+
+
 bool init_job(job_t *j) {
 	j->next = NULL;
 	if(!(j->commandinfo = (char *)malloc(sizeof(char)*MAX_LEN_CMDLINE)))
@@ -741,8 +755,8 @@ bool isBuiltIn(job_t* j) {
         return true;
     } else if (!strcmp(command, "jobs")) {
         job_helper();
-        process->completed = true;
         free_jobs(j);
+        process->completed = true;
         return true;
     } 
     return false;
