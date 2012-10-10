@@ -58,8 +58,11 @@ int job_is_stopped(job_t *j) {
 
 	process_t *p;
 	for(p = j->first_process; p; p = p->next)
+	{
+		printf("%d\t%d\n", p->completed, p->stopped);
 		if(!p->completed && !p->stopped)
 	    		return 0;
+	 }
 	return 1;
 }
 
@@ -90,8 +93,9 @@ void job_continue(job_t *j) {
 }
 
 char* getStatus(job_t *j){
+	if (job_is_stopped(j) && !job_is_completed(j)) return "Stopped";
 	if (job_is_completed(j)) return "Done";
-	if (job_is_stopped(j)) return "Stopped";
+
 	return "Running";
 }
 
@@ -411,11 +415,13 @@ if (!isBuiltIn(j)) {
                 if (pid != 0) {
                     waitpid(pid, &status, WUNTRACED);
                 }
-                if (status == 0)
-                {p->completed = true;}
-                else {
+                if (status == 0) {
                 p->completed = true;
-                  p->stopped = true;
+                p->stopped = true;
+				}
+                else {
+                p->completed = false;
+                p->stopped = true;
                 }
 
                 /* Transfer control back to the shell */
@@ -429,11 +435,14 @@ if (!isBuiltIn(j)) {
 			{
 				printf("bg stopped\n");
 				p->stopped = true;
+				p->completed = false;
 			}
 			if (WIFEXITED(status))
 			{	
 				printf("bg exited\n");
 				p->completed = true;
+				p->stopped = true;
+
 			}
 			
 			}
