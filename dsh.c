@@ -357,7 +357,6 @@ void spawn_job(job_t *j, bool fg) {
 			/* TEST CODE BEGIN */
 			/* Set up pipes, if necessary.  */
             if (p->next) {
-            	printf("There is a next process?\n");
                 if (pipe(mypipe) < 0) {
                    	perror ("pipe");
                    	exit (1);
