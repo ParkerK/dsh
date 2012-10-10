@@ -301,13 +301,13 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
  * */
 
 void spawn_job(job_t *j, bool fg) {
-	if (job_is_completed(j))
-	{
-		return;
-	}
+if (job_is_completed(j))
+{
+return;
+}
 
-	pid_t pid;
-	process_t *p;
+pid_t pid;
+process_t *p;
     pid_t dsh_pgid = tcgetpgrp(shell_terminal);
 
     // Set up pipe
@@ -320,129 +320,99 @@ void spawn_job(job_t *j, bool fg) {
     int mypipe[2], infile, outfile;
     /* TEST CODE END */
 
-	/* Check for input/output redirection; If present, set the IO descriptors
-	 * to the appropriate files given by the user
-	 */
-	 // OLD CODE
-	 // int new_in, new_out, old_in, old_out;
-	 // if (j->ifile != NULL) {
-	 // 	old_in = dup(STDIN_FILENO);
-	 // 	// file is read only
-	 // 	new_in = open(j->ifile, O_RDONLY); 
-	 // 	dup2(new_in, STDIN_FILENO);
-	 // }
+/* Check for input/output redirection; If present, set the IO descriptors
+* to the appropriate files given by the user
+*/
+// OLD CODE
+// int new_in, new_out, old_in, old_out;
+// if (j->ifile != NULL) {
+// old_in = dup(STDIN_FILENO);
+// // file is read only
+// new_in = open(j->ifile, O_RDONLY); 
+// dup2(new_in, STDIN_FILENO);
+// }
 
-	 // if (j->ofile != NULL) {
-	 // 	old_out = dup(STDOUT_FILENO);
-	 // 	// file is a new, write-only file that will be created if it doesn't exist already
-	 // 	// file has permissions 644 (-rw-r--r--)
-	 // 	new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
-	 // 	dup2(new_out, STDOUT_FILENO);
-	 // }
-
-
-	/* A job can contain a pipeline; Loop through process and set up pipes accordingly */
+// if (j->ofile != NULL) {
+// old_out = dup(STDOUT_FILENO);
+// // file is a new, write-only file that will be created if it doesn't exist already
+// // file has permissions 644 (-rw-r--r--)
+// new_out = open(j->ofile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
+// dup2(new_out, STDOUT_FILENO);
+// }
 
 
-	/* For each command (process), fork to create a new process context,
-	 * set the process group, and execute the command
+/* A job can contain a pipeline; Loop through process and set up pipes accordingly */
+
+
+/* For each command (process), fork to create a new process context,
+* set the process group, and execute the command
          */
 
-	/* The code below provides an example on how to set the process context for each command */
-	infile = j->mystdin;
-	for(p = j->first_process; p; p = p->next) {
-		if (!isBuiltIn(p)) {
+/* The code below provides an example on how to set the process context for each command */
+infile = j->mystdin;
+for(p = j->first_process; p; p = p->next) {
+if (!isBuiltIn(p)) {
 
-			/* TEST CODE BEGIN */
-			/* Set up pipes, if necessary.  */
+/* TEST CODE BEGIN */
+/* Set up pipes, if necessary.  */
             if (p->next) {
                 if (pipe(mypipe) < 0) {
-                   	perror ("pipe");
-                   	exit (1);
+                    perror ("pipe");
+                    exit (1);
                 }
                 outfile = mypipe[1];
             }
             else {
-             	outfile = j->mystdout;
+              outfile = j->mystdout;
             }
-         	/* END TEST CODE */
+          /* END TEST CODE */
 
-			switch (pid = fork()) {
+switch (pid = fork()) {
 
-			   case -1: /* fork failure */
-					perror("fork");
-					exit(EXIT_FAILURE);
+  case -1: /* fork failure */
+perror("fork");
+exit(EXIT_FAILURE);
 
-			   case 0: /* child */
-<<<<<<< HEAD
+  case 0: /* child */
+// OLD CODE
+ //      /* establish a new process group, and put the child in
+// * foreground if requested
+// */
+// if (j->pgid < 0) /* init sets -ve to a new process */
+// j->pgid = getpid();
+// p->pid = 0;
 
-			       /* establish a new process group, and put the child in
-				* foreground if requested
-				*/
-				if (j->pgid < 0) /* init sets -ve to a new process */
-					j->pgid = getpid();
-				p->pid = 0;
+// if (!setpgid(0,j->pgid))
+// if(fg) // If success and fg is set
+//     tcsetpgrp(shell_terminal, j->pgid); // assign the terminal
 
-				if (!setpgid(0,j->pgid))
-					if(fg) // If success and fg is set
-					     tcsetpgrp(shell_terminal, j->pgid); // assign the terminal
-
-				/* Set the handling for job control signals back to the default. */
-				signal(SIGTTOU, SIG_DFL);
-
-
-				/* execute the command through exec_ call */
-                    		// Using PATH to find commands
-                    		extern char **environ;
-                    		char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
-                    		environ = env_args;
-                    		if (p->argv[0] != NULL) {
-                    			p->stopped=false;
-                  			execvp(p->argv[0], p->argv);
-                  			exit(0);
-                		}
-=======
-					// OLD CODE
-			  //      /* establish a new process group, and put the child in
-					// * foreground if requested
-					// */
-					// if (j->pgid < 0) /* init sets -ve to a new process */
-					// 	j->pgid = getpid();
-					// p->pid = 0;
-
-					// if (!setpgid(0,j->pgid))
-					// 	if(fg) // If success and fg is set
-					// 	     tcsetpgrp(shell_terminal, j->pgid); // assign the terminal
-
-					// /* Set the handling for job control signals back to the default. */
-					// signal(SIGTTOU, SIG_DFL);
+// /* Set the handling for job control signals back to the default. */
+// signal(SIGTTOU, SIG_DFL);
 
 
-					// /* execute the command through exec_ call */
-	    //             // Using PATH to find commands
-	    //             extern char **environ;
-	    //             char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
-	    //             environ = env_args;
-	    //             if (p->argv[0] != NULL) {
-	    //             		p->stopped=false;
-	    //           		execvp(p->argv[0], p->argv);
-	    //         	}
-	    //             exit(0);
+// /* execute the command through exec_ call */
+   //             // Using PATH to find commands
+   //             extern char **environ;
+   //             char *env_args[] = {"PATH=/bin:/usr/bin:/usr/local/bin", NULL};
+   //             environ = env_args;
+   //             if (p->argv[0] != NULL) {
+   //             p->stopped=false;
+   //           execvp(p->argv[0], p->argv);
+   //         }
+   //             exit(0);
 
-					launch_process (p, j->pgid, infile, outfile, fg);
->>>>>>> 1d5aa1ad4939d661b29220fd14ad86ad2b988574
-			   default: /* parent */
-					/* establish child process group here to avoid race
-					* conditions. */
-					p->pid = pid;
-					if (j->pgid <= 0)
-						j->pgid = pid;
-					setpgid(pid, j->pgid);
-					assign_job_id(j);
-			}
-			
-			/* TEST CODE BEGIN */
-			/* Clean up after pipes.  */
+launch_process (p, j->pgid, infile, outfile, fg);
+  default: /* parent */
+/* establish child process group here to avoid race
+* conditions. */
+p->pid = pid;
+if (j->pgid <= 0)
+j->pgid = pid;
+setpgid(pid, j->pgid);
+assign_job_id(j);
+}
+/* TEST CODE BEGIN */
+/* Clean up after pipes.  */
             if (infile != j->mystdin)
                 close (infile);
             if (outfile != j->mystdout)
@@ -450,56 +420,42 @@ void spawn_job(job_t *j, bool fg) {
             infile = mypipe[0];
             /* END TEST CODE */
 
-	        int status;
-			if(fg){
-			    /* Wait for the job to complete */
-<<<<<<< HEAD
-                		if (pid != 0) {
-                    			waitpid(pid, &status, WUNTRACED|WNOHANG);
-                		}
-                		if (status == 0) {
-                			p->completed = true;
-                		}
-                		else {
-                			p->completed = true;
-                 			p->stopped = true;
-                 		}
-
-                		/* Transfer control back to the shell */
-                		tcsetpgrp(shell_terminal, dsh_pgid);
-=======
+       int status;
+	if(fg){
+   	/* Wait for the job to complete */
                 if (pid != 0) {
                     waitpid(pid, &status, WUNTRACED);
                 }
                 if (status == 0)
                 {p->completed = true;}
                 else {
-                	p->completed = true;
-                 	p->stopped = true;
+                p->completed = true;
+                  p->stopped = true;
                 }
 
                 /* Transfer control back to the shell */
                 tcsetpgrp(shell_terminal, dsh_pgid);
->>>>>>> 1d5aa1ad4939d661b29220fd14ad86ad2b988574
-			}
-			else {
-			    pid = waitpid (WAIT_ANY, &status, WUNTRACED);
-			}
-		}
 	}
-
-	/* Reset file IOs if necessary */
-	// if (j->ifile != NULL) {
-	// 		close(new_in);
-	// 		dup2(old_in, STDIN_FILENO);
-	// }
-
-	// if (j->ofile != NULL) {
-	// 	close(new_out);
-	// 	dup2(old_out, STDOUT_FILENO);
-	// }
+	else {
+		while ( waitpid (-1, NULL , WNOHANG ) > 0) {
+			p->completed = true;
+		}
+   	/* Background job */
+	}
+}
 }
 
+/* Reset file IOs if necessary */
+// if (j->ifile != NULL) {
+// close(new_in);
+// dup2(old_in, STDIN_FILENO);
+// }
+
+// if (j->ofile != NULL) {
+// close(new_out);
+// dup2(old_out, STDOUT_FILENO);
+// }
+}
 bool init_job(job_t *j) {
 	j->next = NULL;
 	if(!(j->commandinfo = (char *)malloc(sizeof(char)*MAX_LEN_CMDLINE)))
@@ -807,8 +763,6 @@ bool isBuiltIn(process_t* process) {
        	 
     	tcsetpgrp(shell_terminal, target_job->pgid);
     	continue_job(target_job);
-    	
-    	wait_for_job(target_job);
     	
         
 //        wait_for_job(target_job);
