@@ -7,7 +7,6 @@
 #include <sys/wait.h> /* for WAIT_ANY */
 #include <fcntl.h> /* for file control */
 #include <string.h>
-
 #include "dsh.h"
 
 int isspace(int c);
@@ -43,13 +42,13 @@ job_t *find_job(pid_t pgid) {
 	return NULL;
 }
 
+     
 job_t *find_job_int(int job_number) {
 	job_t *j;
 	for (j = first_job; j; j = j->next)
 	{
-		printf("job number: %d\n", j->job_number);
 		if(j->job_number == job_number)
-			return j;
+			{return j;}
 	}
 	return NULL;
 }
@@ -80,6 +79,14 @@ int job_is_completed(job_t *j) {
 		if(!p->completed)
 	    		return 0;
 	return 1;
+}
+
+//Stephen Made this method
+void job_continue(job_t *j) {
+       process_t *p;
+       for (p = j->first_process; p; p = p->next)
+         p->stopped = 0;
+       j->notified = 0;
 }
 
 char* getStatus(job_t *j){
@@ -236,8 +243,10 @@ void init_shell() {
 
 /* Sends SIGCONT signal to wake up the blocked job */
 void continue_job(job_t *j) {
+	
 	if(kill(-j->pgid, SIGCONT) < 0)
 		perror("kill(SIGCONT)");
+	printf("job wake up sent: %s\n", j->commandinfo);
 }
 
 
@@ -658,29 +667,22 @@ bool isBuiltIn(process_t* process) {
         process->completed = true;
         return true;
     } else if (!strcmp(command, "bg")) {
-    	int job_number = (int)process->argv[1];
-   	 
-   	printf("bg input: %s\n", process->argv[1]);
+    	int job_number = atoi(process->argv[1]);
    	
     	job_t* target_job = find_job_int(job_number);
-    	
-    	if (find_job_int(job_number) != NULL)
-   	 {
-   	    printf("found!\n");
-   	    printf("%s\n", target_job->commandinfo);
-   	 }
+    
     	if (target_job==NULL) {
-    		printf("NULL JOB\n");
         	target_job = find_last_job();
         	}
-	
+        	
+        target_job->bg = true;
+        job_continue(target_job);
 	continue_job(target_job);
-    	process->completed = true;
+	process->completed=true;
         return true;
     } else if (!strcmp(command, "fg")) {
-    	int process_value = (int)process->argv[1];
-    	pid_t bg_process = tcgetpgrp(process_value);
-    	job_t* target_job = find_job(bg_process);
+    	int job_number = atoi(process->argv[1]);
+    	job_t* target_job = find_job_int(job_number);
    	 
     	if (target_job==NULL) {
         	target_job = find_last_job();
@@ -688,6 +690,13 @@ bool isBuiltIn(process_t* process) {
        	 
     	tcsetpgrp(shell_terminal, target_job->pgid);
     	continue_job(target_job);
+    	
+        
+//        wait_for_job(target_job);
+//     
+//        /* Restore the shell's terminal modes.  */
+//        tcgetattr (shell_terminal, &target_job->tmodes);
+//        tcsetattr (shell_terminal, TCSADRAIN, &shell_tmodes);
     	process->completed = true;
         return true;
     } else if (!strcmp(command, "jobs")) {
