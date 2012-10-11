@@ -59,7 +59,6 @@ int job_is_stopped(job_t *j) {
 	process_t *p;
 	for(p = j->first_process; p; p = p->next)
 	{
-		printf("%d\t%d\n", p->completed, p->stopped);
 		if(!p->completed && !p->stopped)
 				return 0;
 	 }
@@ -101,10 +100,29 @@ char* getStatus(job_t *j){
 
 void job_helper() {
 	job_t *j = first_job;
+	process_t *p;
 	if(!j) return;
 	char *status = getStatus(j);
 	while(j != NULL){
 		if (strcmp(j->commandinfo, "jobs") != 0) {
+			for (p = j->first_process; p; p = p->next) {
+				while ( waitpid (-1, &status , WNOHANG ) > 0) {
+					// printf("bg exited with status: %d \n", status);
+					// printf("exited command: %s \n", p->argv[0]);
+					if (WIFSTOPPED(status))
+					{
+						// printf("bg stopped\n");
+						p->stopped = true;
+						p->completed = false;
+					}
+					if (WIFEXITED(status))
+					{	
+						// printf("bg exited\n");
+						p->completed = true;
+						p->stopped = true;
+					}
+				}
+			}
 			status = getStatus(j);
 			printf("[%d]-\t%s\t\t%s\n", j->job_number, status, j->commandinfo);
 			}
@@ -369,7 +387,6 @@ void spawn_job(job_t *j, bool fg) {
 /* The code below provides an example on how to set the process context for each command */
 infile = j->mystdin;
 for(p = j->first_process; p; p = p->next) {
-	printf("Starting Process: %s\n\n", p->argv[0]);
 if (!isBuiltIn(j)) {
 
 			/* Set up pipes, if necessary.  */
@@ -428,24 +445,7 @@ if (!isBuiltIn(j)) {
 				tcsetpgrp(shell_terminal, dsh_pgid);
 	}
 	else {
-		while ( waitpid (-1, &status , WNOHANG ) > 0) {
-			printf("bg exited with status: %d \n", status);
-			printf("exited command: %s \n", p->argv[0]);
-			if (WIFSTOPPED(status))
-			{
-				printf("bg stopped\n");
-				p->stopped = true;
-				p->completed = false;
-			}
-			if (WIFEXITED(status))
-			{	
-				printf("bg exited\n");
-				p->completed = true;
-				p->stopped = true;
-
-			}
-			
-		}
+		// BG
 	}
 }
 }
