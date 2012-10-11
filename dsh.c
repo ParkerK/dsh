@@ -346,8 +346,8 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
 		if (p->argv[0] != NULL) {
 			p->stopped=false;
 			if (execvp(p->argv[0], p->argv)<0) {
-				fprintf(stderr, "Error: %s:Invalid command\n", p->argv[0]);
-				fprintf(stdout, "Error: %s:Invalid command\n", p->argv[0]);
+				fprintf(stderr, "Error: \t%s: Invalid command\n", p->argv[0]);
+				fprintf(stdout, "Error: \t%s: Invalid command\n", p->argv[0]);
 				p->stopped=true;
 				p->completed=true;
 			}
