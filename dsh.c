@@ -85,11 +85,17 @@ int job_is_completed(job_t *j) {
 }
 
 //Stephen Made this method
-void job_continue(job_t *j) {
+void init_job_continue(job_t *j) {
 	   process_t *p;
 	   for (p = j->first_process; p; p = p->next)
 		 {p->stopped = 0; p->completed = 0;}
 	   j->notified = 0;
+}
+
+void set_job_completed(job_t *j) {
+	   process_t *p;
+	   for (p = j->first_process; p; p = p->next)
+		 {p->stopped = 1; p->completed = 1;}
 }
 
 char* getStatus(job_t *j){
@@ -739,7 +745,7 @@ bool readcmdline(char *msg) {
 
 /* Build prompt messaage; Change this to include process ID (pid)*/
 char* promptmsg() {
-		return  "dsh$ ";
+	return  "dsh$ ";
 }
 
 bool isBuiltIn(job_t* j) {
@@ -756,39 +762,44 @@ bool isBuiltIn(job_t* j) {
 		return true;
 	}
 	else if (!strcmp(command, "bg")) {
-		int job_number = atoi(process->argv[1]);
-	
-		job_t* target_job = find_job_int(job_number);
-	
-		if (target_job==NULL) {
+		remove_job(j);
+		job_t* target_job;
+		if (process->argv[1] == NULL) {
 			target_job = find_last_job();
+		} else {
+			int job_number = atoi(process->argv[1]);
+			target_job = find_job_int(job_number);
 		}
 			
 		target_job->bg = true;
-		job_continue(target_job);
+		init_job_continue(target_job);
 		continue_job(target_job);
 		process->completed=true;
-		remove_job(j);
 		return true;
 	}
 	else if (!strcmp(command, "fg")) {
-		int job_number = atoi(process->argv[1]);
-		job_t* target_job = find_job_int(job_number);
-	 
-		if (target_job==NULL) {
-			target_job = find_last_job();
-		}
-		 
-		tcsetpgrp(shell_terminal, target_job->pgid);
-		continue_job(target_job);
-		  
-//        wait_for_job(target_job);
-//     
-//        /* Restore the shell's terminal modes.  */
-//        tcgetattr (shell_terminal, &target_job->tmodes);
-//        tcsetattr (shell_terminal, TCSADRAIN, &shell_tmodes);
-		process->completed = true;
 		remove_job(j);
+		pid_t dsh_pgid = tcgetpgrp(shell_terminal);
+		job_t* target_job;
+		if (process->argv[1] == NULL) {
+			target_job = find_last_job();
+		} else {
+			int job_number = atoi(process->argv[1]);
+			target_job = find_job_int(job_number);
+		}
+		
+		tcsetpgrp(shell_terminal, target_job->pgid);
+		init_job_continue(target_job);
+		continue_job(target_job);
+		
+		int status;
+		/* Wait for the job to complete */
+		waitpid(target_job->pgid, &status, WUNTRACED);
+		set_job_completed(target_job);
+
+		/* Transfer control back to the shell */
+		tcsetpgrp(shell_terminal, dsh_pgid);
+		process->completed = true;
 		return true;
 	}
 	else if (!strcmp(command, "jobs")) {
@@ -826,11 +837,6 @@ int main() {
 					}
 			continue; /* NOOP; user entered return or spaces with return */
 		}
-		/* Only for debugging purposes and to show parser output */
-		// printf("\n\nJOBS:\n");
-		// print_job();
-  //       printf("\n\n");
-		print_job_list();
 
 		job_t *j;
 		for (j = first_job; j; j = j->next) {
@@ -838,14 +844,6 @@ int main() {
 				spawn_job(j, !j->bg);
 			}
 		}
-		/* Your code goes here */
-		/* You need to loop through jobs list since a command line can contain ;*/
-		/* Check for built-in commands */
-		/* If not built-in */
-			/* If job j runs in foreground */
-			/* spawn_job(j,true) */
-			/* else */
-			/* spawn_job(j,false) */
 	}
 }
 
