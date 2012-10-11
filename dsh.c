@@ -113,16 +113,17 @@ void job_helper() {
 	while(j != NULL){
 		if (strcmp(j->commandinfo, "jobs") != 0) {
 			for (p = j->first_process; p; p = p->next) {
-				while ( waitpid (-1, &status , WNOHANG ) > 0) {
+				int waitStatus;
+				while ( waitpid (-1, &waitStatus , WNOHANG ) > 0) {
 					// printf("bg exited with status: %d \n", status);
 					// printf("exited command: %s \n", p->argv[0]);
-					if (WIFSTOPPED(status))
+					if (WIFSTOPPED(waitStatus))
 					{
 						// printf("bg stopped\n");
 						p->stopped = true;
 						p->completed = false;
 					}
-					if (WIFEXITED(status))
+					if (WIFEXITED(waitStatus))
 					{	
 						// printf("bg exited\n");
 						p->completed = true;
@@ -343,8 +344,10 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
 		if (p->argv[0] != NULL) {
 			p->stopped=false;
 			if (execvp(p->argv[0], p->argv)<0) {
-				printf("%s\n", "DDD");
-				fprintf(stderr, "Error: %s:Invalid command ", p->argv[0]);
+				fprintf(stderr, "Error: %s:Invalid command\n", p->argv[0]);
+				fprintf(stdout, "Error: %s:Invalid command\n", p->argv[0]);
+				p->stopped=true;
+				p->completed=true;
 			}
 
 		}
@@ -828,9 +831,14 @@ void print_job_list() {
 }
 
 int main() {
-	freopen( "dsh.log", "w+", stderr );
 	init_shell();
-
+	int new_err, old_err;
+	old_err = dup(STDERR_FILENO);
+	// file is a new, write-only file that will be created if it doesn't exist already
+	// file has permissions 644 (-rw-r--r--)
+	new_err = open("dsh.log", O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR | S_IROTH);  
+	dup2(new_err, STDERR_FILENO);
+	fprintf(stderr, "DSH LOG FILE (%d):\n", shell_pgid);
 	while(1) {
 		if(!readcmdline(promptmsg())) {
 			if (feof(stdin)) { /* End of file (ctrl-d) */
