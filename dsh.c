@@ -133,6 +133,8 @@ void job_helper() {
 			}
 			status = getStatus(j);
 			printf("[%d]-\t%s\t\t%s\n", j->job_number, status, j->commandinfo);
+			fprintf(stderr, "%d(%s): %s\n", j->pgid, status, j->commandinfo);
+
 			}
 		j = j->next;
 	}
@@ -431,6 +433,8 @@ if (!isBuiltIn(j)) {
 						j->pgid = pid;
 					setpgid(pid, j->pgid);
 					assign_job_id(j);
+					fprintf(stderr, "%d(Launched): %s\n", j->pgid, j->commandinfo);
+
 			}
 			
 			/* Clean up after pipes.  */
@@ -445,6 +449,7 @@ if (!isBuiltIn(j)) {
 	/* Wait for the job to complete */
 				if (pid != 0) {
 					waitpid(pid, &status, WUNTRACED);
+
 				}
 				if (status == 0) {
 				p->completed = true;
@@ -453,6 +458,8 @@ if (!isBuiltIn(j)) {
 				else {
 				p->completed = false;
 				p->stopped = true;
+				fprintf(stderr, "%d: Stopped by signal %d\n", j->pgid, WTERMSIG(status));
+
 				}
 
 				/* Transfer control back to the shell */
