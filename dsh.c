@@ -741,9 +741,12 @@ bool readcmdline(char *msg) {
 
 /* Build prompt messaage; Change this to include process ID (pid)*/
 char* promptmsg() {
-	return  "dsh$ ";
+	char * s = malloc(snprintf(NULL, 0, "dsh-%d$ ", shell_pgid) + 1);
+	sprintf(s, "dsh-%d$ ", shell_pgid);
+	return s;
 }
 
+/* Checks whether a command is built in to the shell and handles it accordingly */
 bool isBuiltIn(job_t* j) {
 	process_t* process = j->first_process;
 	char* command = process->argv[0];
