@@ -336,7 +336,11 @@ void launch_process (process_t *p, pid_t pgid, int infile, int outfile, bool fg)
 		environ = env_args;
 		if (p->argv[0] != NULL) {
 			p->stopped=false;
-			execvp(p->argv[0], p->argv);
+			if (execvp(p->argv[0], p->argv)<0) {
+				printf("%s\n", "DDD");
+				fprintf(stderr, "Error: %s:Invalid command ", p->argv[0]);
+			}
+
 		}
 }
 
