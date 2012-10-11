@@ -7,6 +7,7 @@
 #include <sys/wait.h> /* for WAIT_ANY */
 #include <fcntl.h> /* for file control */
 #include <string.h>
+#include <stdio.h>
 #include "dsh.h"
 
 int isspace(int c);
@@ -809,7 +810,7 @@ void print_job_list() {
 }
 
 int main() {
-
+	freopen( "dsh.log", "w+", stderr );
 	init_shell();
 
 	while(1) {
